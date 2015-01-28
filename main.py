@@ -9,7 +9,6 @@ from webapp2_extras import routes
 from wikiengine import wiki_handlers
 from users import users_handlers
 from libs.flush import flush_handlers
-from wikiengine import guestbook
 
 DEBUG = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
@@ -17,7 +16,7 @@ DEBUG = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 PAGE_RE = r'(/(?:[a-zA-Z0-9]+/?)*)'
 app = webapp2.WSGIApplication([
        ('/upload' + PAGE_RE, wiki_handlers.EditPage),
-       ('/img', wiki_handlers.Image),
+       ('/img' + PAGE_RE, wiki_handlers.Image),
        ('/login', users_handlers.Login),
        ('/logout', users_handlers.Logout),
        ('/flush', flush_handlers.Flush),

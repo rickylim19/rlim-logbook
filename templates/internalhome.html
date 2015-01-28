@@ -32,8 +32,10 @@
                         <br>
                         <br>
 
-                        <img src='/img?img_id={{ img_key }}'
+                        {% if img_key %}
+                        <img src='/img{{ path }}?img_id={{img_key}}'
                              class="img-responsive img-thumbnail">
+                        {% endif %}
                         <br>
                         <br>
                         <p><a class="btn btn-default" href="/admin{{path}}" role="button">View details &raquo;</a></p>

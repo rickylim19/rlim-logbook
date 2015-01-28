@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from hashlib import sha1
 from basehandler import basehandler
 from libs.models.pagemodels import *
 from libs.models.quotemodels import *
@@ -50,7 +50,10 @@ def getRecentPages(internal = False):
         path_content = []
         for page in pages:
             if page is not None:
-                path, last_modified, img_key = page.path, page.last_modified, page.key.urlsafe()
+                if page.img:
+                    path, last_modified, img_key = page.path, page.last_modified, page.img_id
+                else:
+                    path, last_modified, img_key = page.path, page.last_modified, None
 
                 path_content.append((path, last_modified, img_key))
         path_content = sorted(path_content, key = lambda x:x[1], reverse = True)
@@ -145,6 +148,8 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
             else:
                 img = self.request.get('img')
 
+            img_id = sha1(str(img)).hexdigest()
+
 
 
             update = False
@@ -154,11 +159,13 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
             elif old_page.content == content:
                 version = old_page.version
                 old_page.img = img
+                old_page.img_id = img_id
                 old_page.put()
                 update = False
             elif old_page.content != content:
                 version  = old_page.version + 1
                 old_page.img = img
+                old.page.img_id = img_id
                 update = True
 
             if update:
@@ -168,7 +175,9 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
                                               path = path,
                                               content = content,
                                               version = version,
-                                              img = str(img))
+                                              img = str(img),
+                                              img_id = img_id
+                                              )
 
                     internal_p.put()
                     self.redirect("/admin" + path)
@@ -179,6 +188,7 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
                              content = content,
                              version = version,
                              img = str(img),
+                             img_id = img_id
                              )
                     p.put()
                     self.redirect(path)
@@ -226,7 +236,10 @@ class WikiPage(basehandler.BaseHandler):
 
                 if not p: return self.notfound()
                 content = markdown(p.content)
-                img_key = p.key.urlsafe()
+                if p.img:
+                    #img_key = p.key.urlsafe()
+                    img_key = p.img_id
+                else: img_key = None
 
         else:
             if internal:
@@ -236,7 +249,10 @@ class WikiPage(basehandler.BaseHandler):
                 page = Page._by_path(path)
                 p = page.get()
             if p:
-                img_key = p.key.urlsafe()
+                if p.img:
+                    #img_key = p.key.urlsafe()
+                    img_key = p.img_id
+                else: img_key = None
                 content = markdown(p.content)
             else:
                 content = p
@@ -340,22 +356,25 @@ class DeletePage(basehandler.BaseHandler):
             self.redirect('/admin/_history' + path)
 
         if self.useradmin and not v:
-            if internal:
-                keys_ = InternalPage.query().filter(InternalPage.path == path).fetch(keys_only = True)
-            else:
-                keys_ = Page.query().filter(Page.path == path).fetch(keys_only = True)
+            if internal: keys_ = InternalPage.query().filter(InternalPage.path == path).fetch(keys_only = True)
+            else: keys_ = Page.query().filter(Page.path == path).fetch(keys_only = True)
             ndb.delete_multi(keys_)
             self.redirect('/?')
 
-class Tmp(basehandler.BaseHandler):
-    def get(self):
-        self.render("page_tmp.html", path = '/home')
-
 class Image(basehandler.BaseHandler):
-    def get(self):
-        img_key = ndb.Key(urlsafe = self.request.get('img_id'))
-        page = img_key.get()
-        if page.img:
+    def get(self, path):
+        internal = checkInternal(path)
+        img_id = self.request.get('img_id')
+        logging.error(img_id)
+
+        if internal:
+            page = InternalPage._by_img_id(img_id, path).get()
+        else:
+            page = Page._by_img_id(img_id, path).get()
+        #img_key = ndb.Key(urlsafe = self.request.get('img_id'))
+        #page = img_key.get()
+        logging.error(page)
+        if page:
             self.response.headers['Content-Type'] = 'image/png'
             self.response.out.write(page.img)
         else:

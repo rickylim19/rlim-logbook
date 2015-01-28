@@ -11,6 +11,7 @@ class Page(ndb.Model):
     version = ndb.IntegerProperty(required = True)
     #blob_key = ndb.BlobKeyProperty()
     img = ndb.BlobProperty()
+    img_id = ndb.StringProperty()
     created = ndb.DateTimeProperty(auto_now_add=True)
     last_modified = ndb.DateTimeProperty(auto_now=True)
 
@@ -32,6 +33,12 @@ class Page(ndb.Model):
     def _by_version(cls, version, path):
         q = cls.query(ancestor = cls._parent_key(path))
         q = q.filter(cls.version == version)
+        return q
+
+    @classmethod
+    def _by_img_id(cls, img_id, path):
+        q = cls.query(ancestor = cls._parent_key(path))
+        q = q.filter(cls.img_id == img_id)
         return q
 
     def _as_dict(self):

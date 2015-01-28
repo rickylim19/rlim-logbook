@@ -25,7 +25,9 @@
     <div class="page-header">
         <h1>{{ path.strip('/') }}</h1>
     </div>
-    <img src='/img?img_id={{img_key}}' class="img-responsive img-rounded center-block">
+    {% if img_key %}
+        <img src='/img{{ path }}?img_id={{img_key}}' class="img-responsive img-rounded center-block">
+    {% endif %}
 
         {{ content | safe }}
 </div>
