@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block customcss %}
+    <link href="/css/page.css" rel="stylesheet">
+
+{% endblock %}
+
+{% block controls %}
+    {% if user %}
+    <form class="navbar-form navbar-right" action="/_edit{{path}}">
+        <button type="submit" class="btn btn-success" value="Edit">
+            Edit
+        </button>
+    </form>
+    <form class="navbar-form navbar-right" action="/_history{{path}}">
+        <button type="submit" class="btn btn-success" value="login">
+            History
+        </button>
+    </form>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <h2> content </h2>
+    <h2> Fuck </h2>
+
+    <form method="post">
+        <fieldset>
+            <textarea class="form-control" name="content" id="content">
+                {{ page and page.content or "" }}
+            </textarea>
+                <button type="submit" class="btn ">Publish</button>
+
+        <br>
+        <div id="preview"></div>
+
+        </fieldset>    
+    </form>
+</div>
+    {% if error is defined %}
+    <div class="alert alert-dismissable alert-danger">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+            {{error}}
+    </div>
+
+ 
+    {% endif %}
+
+    <script src="/js/showdown.js"></script>
+    <script src="/js/mdpreview.js"></script>
+
+{% endblock %}
+
+</html>

@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>rlim-logbook</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <style>
+        .dropdown-backdrop {
+            position: static;
+        }
+    </style>
+
+
+    <link href="/css/jumbotron.css" rel="stylesheet">
+
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script data-require="jquery@*" data-semver="2.0.3" src="/js/jquery-2.0.3.min.js"></script>
+        <script data-require="bootstrap@*" data-semver="3.1.1" src="/js/bootstrap.min.js"></script>
+
+    </head>
+
+    <body>
+
+    <div class="navbar navbar-default navbar-fixed-top">
+
+        <div class="navbar-header">
+
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <a class="navbar-brand" href="/" >
+                <span class="glyphicon glyphicon-book"></span>
+                Log-Book
+            </a>
+        </div>
+
+
+        <div class="navbar-collapse collapse navbar-responsive-collapse">
+            <ul class="nav navbar-nav">
+                <li class="">
+                    <a href="/about">
+                        About
+                    </a>
+                </li>
+                <li class="">
+                    <a href="/admin/internal">
+                        <i class="fa fa-lock"></i>
+                        Internal
+                    </a>
+                </li>
+            </ul>
+
+
+
+
+
+            <p class="navbar-text navbar-right" data-toggle="dropdown">
+                Hi <b>test@example.com </b>
+                <span class="glyphicon glyphicon-user"></span>
+                <span class="caret"></span>
+            </p>
+
+                <ul class="dropdown-menu dropdown-menu-right" role="menu"
+                    aria-labelledby="dropdownMenu1">
+                    <li role="presentation">
+                        <a role="menuitem" tabindex="-1" href="/_ah/login?continue=http%3A//test.local%3A8080/&amp;action=logout">
+                            logout
+                        </a>
+                    </li>
+                </ul>
+
+
+
+
+
+
+
+
+        </div><!--/.navbar-collapse -->
+
+    </div>
+
+    <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Confirm Delete</h4>
+                </div>
+
+                <div class="modal-body">
+                    <p>You are about to delete one wikipage, this procedure is irreversible!</p>
+                    <p>Do you want to proceed?</p>
+                    <p class="debug-url"></p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <a href="#" class="btn btn-danger danger">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Area for Quote-->
+    <div class="jumbotron">
+        <div class="container">
+            <h1>#quote</h1>
+        <blockquote style="border-color: #ddd;">
+            <p>We share, because we are not alone</p>
+
+
+
+        </blockquote>
+
+        <!--
+        <a class="btn btn-primary btn-lg navbar-right" href='#' onclick='location.reload(true); return false;'>
+             Flip &raquo;
+        </a>
+        -->
+
+        </div>
+    </div> <!-- The End for Quotes -->
+
+    <!-- Area for Pages -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+            <h2>
+                <a class="brand" href="/test4" target='_blank'>
+                    test4
+                </a>
+            </h2>
+            <small><i>Last Modified:</i>04:50 / 27-01-2015</small>
+
+                    <a data-href="/admin/_delete/test4" data-toggle="modal" data-target="#confirm-delete" href="#">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </a>
+
+            </hr>
+
+                <br>
+                <br>
+
+                <img src='http://dragonball.zeldac.com/wp-content/uploads/2012/09/DBKaiPoster-800x400.png'
+                     class="img-responsive img-thumbnail">
+                <br>
+                <br>
+
+
+
+
+            <p><a class="btn btn-default" href="/test4" role="button">View details &raquo;</a></p>
+            </div>
+            <div class="col-md-6">
+            <h2>
+                <a class="brand" href="/test2" target='_blank'>
+                    test2
+                </a>
+            </h2>
+            <small><i>Last Modified:</i>12:33 / 26-01-2015</small>
+
+                    <a data-href="/admin/_delete/test2" data-toggle="modal" data-target="#confirm-delete" href="#">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </a>
+
+            </hr>
+                <br>
+                <br>
+
+                <img src='://dragonball.zeldac.com/wp-content/uploads/2012/09/DBKaiPoster-800x400.png'
+                     class="img-responsive img-thumbnail">
+                <br>
+                <br>http
+
+
+
+            <p><a class="btn btn-default" href="/test2" role="button">View details &raquo;</a></p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+            <h2>
+                <a class="brand" href="/test3" target='_blank'>
+                    test3
+                </a>
+            </h2>
+            <small><i>Last Modified:</i>12:20 / 26-01-2015</small>
+
+                    <a data-href="/admin/_delete/test3" data-toggle="modal" data-target="#confirm-delete" href="#">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </a>
+
+            </hr>
+
+
+
+            <p><p>hello 3</p>
+</p>
+            <p><a class="btn btn-default" href="/test3" role="button">View details &raquo;</a></p>
+            </div>
+        </div>
+
+
+    </div> <!-- The End for Pages -->
+      <form action="/sign?%s" enctype="multipart/form-data" method="post">
+            <div><textarea name="content" rows="3" cols="60"></textarea></div>
+            <div><input type="submit" value="Sign Guestbook"></div>
+          </form>
+          <hr>
+          <form>Guestbook name: <input value="%s" name="guestbook_name">
+          <div><label>Avatar:</label></div>
+          <div><input type="file" name="img"/></div>
+          <input type="submit" value="switch"></form>
+
+
+
+    <div class="footer">
+        <div class="container">
+            <p class="text-muted pull-left">
+                &copy;left: <b>rlim</b>
+                <a href="https://github.com/rickylim19/rlim-logbook"><i class="fa fa-github"></i></a>
+            </p>
+            <p class="text-muted pull-right">
+                 <br>
+            </p>
+        </div>
+    </div>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+        TeX: { equationNumbers: {autoNumber: "AMS"} }
+        });
+	</script>
+
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+	<script type="text/javascript" src="/js/marked.js"></script>
+
+	<script>
+        marked.setOptions({
+        renderer: new marked.Renderer(),
+        gfm: true,
+        tables: true,
+        breaks: false,
+        pedantic: false,
+        sanitize: false, // IMPORTANT, because we do MathJax before markdown,
+                    //            however we do escaping in 'CreatePreview'.
+        smartLists: true,
+        smartypants: false
+        });
+	</script>
+
+
+        <script>
+            $('#confirm-delete').on('show.bs.modal', function(e) {
+                $(this).find('.danger').attr('href', $(e.relatedTarget).data('href'));
+
+                $('.debug-url').html('Delete URL: <strong>' + $(this).find('.danger').attr('href') + '</strong>');
+            })
+        </script>
+
+
+
+
+
+
+  </body>
+</html>

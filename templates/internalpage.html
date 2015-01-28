@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block customcss %}
+    <link href="/css/page.css" rel="stylesheet">
+{% endblock %}
+
+{% block internal %} active {% endblock %}
+
+{% block controls %}
+        {% if admin %}
+            <form class="navbar-form navbar-right" action="/admin/_edit{{path}}">
+                <button type="submit" class="btn btn-success" value="Edit">
+                    Edit
+                </button>
+            </form>
+            <form class="navbar-form navbar-right" action="/admin/_history{{path}}">
+                <button type="submit" class="btn btn-success" value="login">
+                    History
+                </button>
+            </form>
+        {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="page-header">
+        <h1>{{ path | replace("/internal/", "") }}</h1>
+    </div>
+    <img src='/img?img_id={{img_key}}' class="img-responsive img-rounded center-block">
+        {{ content | safe }}
+</div>
+
+<div class="pull-right">
+    {{age}}
+</div>
+
+{% endblock %}

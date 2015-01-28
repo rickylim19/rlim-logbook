@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block customcss %}
+    <link href="/css/page.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <form method="post">
+        <fieldset>
+            <h2> Quote </h2>
+            <textarea class="form-control" style="font-family:monospace;" name="content" id="content" rows="5" placeholder="please enter raw text here"></textarea>
+        </fieldset>
+
+            <br>
+            
+        <fieldset>
+            <h2> Source </h2>
+            <textarea class="form-control" style="font-family:monospace;" name="source" id="source" rows="2" placeholder="please enter raw text here"></textarea>
+
+            <br>
+
+            <div id="inputs">
+                <button type="submit" class="btn pull-right">Publish</button>
+            </div>
+        </fieldset>
+
+        <br>
+
+    </form>
+</div>
+
+{% if error is defined %}
+    <div class="alert alert-dismissable alert-danger">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+            {{error}}
+    </div>
+{% endif %}
+
+<script src="/js/mdpreview.js"></script>
+
+{% endblock %}
+
+</html>

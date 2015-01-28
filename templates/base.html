@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>rlim-logbook</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <style>
+        .dropdown-backdrop {
+            position: static;
+        }
+    </style>
+
+    {% block customcss %}
+    {% endblock %}
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script data-require="jquery@*" data-semver="2.0.3" src="/js/jquery-2.0.3.min.js"></script>
+        <script data-require="bootstrap@*" data-semver="3.1.1" src="/js/bootstrap.min.js"></script>
+
+    </head>
+
+    <body>
+
+    <div class="navbar navbar-default navbar-fixed-top">
+
+        <div class="navbar-header">
+
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <a class="navbar-brand" href="/" >
+                <span class="glyphicon glyphicon-book"></span>
+                Log-Book
+            </a>
+        </div>
+
+        
+        <div class="navbar-collapse collapse navbar-responsive-collapse">
+            <ul class="nav navbar-nav">
+                <li class="">
+                    <a href="/about">
+                        About
+                    </a>
+                </li>
+                <li class="{% block internal %}{% endblock %}">
+                    <a href="/admin/internal">
+                        <i class="fa fa-lock"></i>
+                        Internal
+                    </a>
+                </li>
+            </ul>
+
+       {% block user %}
+
+        {% if user %}
+
+            <p class="navbar-text navbar-right" data-toggle="dropdown">
+                Hi <b>{{ user.name }} </b>  
+                <span class="glyphicon glyphicon-user"></span>
+                <span class="caret"></span>
+            </p>
+
+                <ul class="dropdown-menu dropdown-menu-right" role="menu" 
+                    aria-labelledby="dropdownMenu1">
+                    <li role="presentation">
+                        <a role="menuitem" tabindex="-1" href="/logout">logout</a>
+                    </li>
+                </ul>
+
+        {% elif admin %}
+
+            <p class="navbar-text navbar-right" data-toggle="dropdown">
+                Hi <b>{{ admin.nickname() }} </b>  
+                <span class="glyphicon glyphicon-user"></span>
+                <span class="caret"></span>
+            </p>
+
+                <ul class="dropdown-menu dropdown-menu-right" role="menu" 
+                    aria-labelledby="dropdownMenu1">
+                    <li role="presentation">
+                        <a role="menuitem" tabindex="-1" href="{{admin_logout}}">
+                            logout
+                        </a>
+                    </li>
+                </ul>
+
+        {% else %}
+
+            <form class="navbar-form navbar-right" action="/login">
+                <button type="submit" class="btn btn-primary" value="login">
+                    login
+                </button>
+            </form>
+            <form class="navbar-form navbar-right" action="/admin/">
+                <button type="submit" class="btn btn-primary" value="login">
+                    admin
+                </button>
+            </form>
+
+        {% endif %}
+
+{% endblock %}
+        
+        {% block controls %}
+        {% endblock %}
+
+        </div><!--/.navbar-collapse -->
+        
+    </div>
+
+    <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Confirm Delete</h4>
+                </div>
+
+                <div class="modal-body">
+                    <p>You are about to delete one wikipage, this procedure is irreversible!</p>
+                    <p>Do you want to proceed?</p>
+                    <p class="debug-url"></p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <a href="#" class="btn btn-danger danger">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block content %}
+    {% endblock %}
+
+    <div class="footer">
+        <div class="container">
+            <p class="text-muted pull-left">
+                &copy;left: <b>rlim</b> 
+                <a href="https://github.com/rickylim19/rlim-logbook"><i class="fa fa-github"></i></a>
+            </p>
+            <p class="text-muted pull-right">
+                {{ age }} <br>
+            </p>
+        </div>
+    </div>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+        showProcessingMessages: false,
+        tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+        TeX: { equationNumbers: {autoNumber: "AMS"} }
+        });
+	</script>
+
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+	<script type="text/javascript" src="/js/marked.js"></script>
+
+	<script>
+        marked.setOptions({
+        renderer: new marked.Renderer(),
+        gfm: true,
+        tables: true,
+        breaks: false,
+        pedantic: false,
+        sanitize: false, // IMPORTANT, because we do MathJax before markdown,
+                    //            however we do escaping in 'CreatePreview'.
+        smartLists: true,
+        smartypants: false
+        });
+	</script>
+
+    {% if admin %}
+        <script>
+            $('#confirm-delete').on('show.bs.modal', function(e) {
+                $(this).find('.danger').attr('href', $(e.relatedTarget).data('href'));
+
+                $('.debug-url').html('Delete URL: <strong>' + $(this).find('.danger').attr('href') + '</strong>');
+            })
+        </script>
+    {% endif %}
+
+    {% block preview_script %}  
+    {% endblock %}
+
+
+  </body>
+</html>
