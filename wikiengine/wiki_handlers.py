@@ -22,6 +22,7 @@ import urllib
 from google.appengine.api import search
 
 
+_INDEX_NAME = 'wiki'
 def getRecentPages(internal = False):
 
     if internal:
@@ -43,12 +44,14 @@ def getRecentPages(internal = False):
         for page in pages:
             if page is not None:
                 if page.img:
-                    path, uname, last_modified, img_key = page.path, page.username,\
-                                                          page.last_modified, page.img_id
+                    path, uname, last_modified, img_key, content = page.path, page.username,\
+                                                          page.last_modified, page.img_id,\
+                                                          page.content
                 else:
-                    path, uname, last_modified, img_key = page.path, page.username,\
-                                                          page.last_modified, None
-                path_content.append((path, uname, last_modified, img_key))
+                    path, uname, last_modified, img_key, content = page.path, page.username,\
+                                                          page.last_modified, None,\
+                                                          page.content
+                path_content.append((path, uname, last_modified, img_key, content))
         # sorted based on the last_modified from the most recent date
         path_content = sorted(path_content, key = lambda x:x[2], reverse = True)
     else:
@@ -65,6 +68,7 @@ class Home(basehandler.BaseHandler):
         quote, source = self.getRandomQuote()
         path_content = getRecentPages()
 
+
         self.render("home.html",
                     quote = quote, source = source,
                     pages = path_content)
@@ -73,9 +77,39 @@ class InternalHome(basehandler.BaseHandler):
     def get(self):
         if self.useradmin:
             path_content = getRecentPages(internal = True)
-            logging.error(path_content)
+
             self.render("internalhome.html",
-                        pages = path_content)
+                            pages = path_content)
+
+    def post(self):
+        if self.useradmin:
+
+            # for searching
+            query = self.request.get('search').strip()
+            if query:
+                # sort results by date descending
+                expr_list = [search.SortExpression(
+                    expression='date', default_value=datetime(1999, 01, 01),
+                    direction=search.SortExpression.DESCENDING)]
+                # construct the sort options
+                sort_opts = search.SortOptions(
+                    expressions=expr_list)
+                query_options = search.QueryOptions(
+                    limit = 10,
+                    snippeted_fields=['content'],
+                    sort_options=sort_opts,
+                    returned_fields = ['path'])
+
+                query_obj = search.Query(query_string=query, options=query_options)
+                results = search.Index(name=_INDEX_NAME).search(query=query_obj)
+                len_results = len(results.results)
+
+                self.render('internalhome.html', results = results,
+                            len_results = len_results)
+
+            else:
+                self.redirect('/admin/internal')
+
 
 class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
     def get(self, path):
@@ -112,10 +146,13 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
         content = self.request.get('content')
         internal = self.isInternal(path)
 
-
-
         if path and content:
+            if internal:
+                path_index = '/admin' + path
+            else:
+                path_index = path
             search.Index(name = _INDEX_NAME).put(CreateDocument(author = self.uname,
+                                                                path = path_index,
                                                                 content = content))
             if internal:
                 old_page = InternalPage._by_path(path).get()
@@ -272,7 +309,6 @@ class AddQuote(basehandler.BaseHandler):
 
 class DeletePage(basehandler.BaseHandler):
     def get(self, path):
-        path = urllib.urlencode(path)
         v = self.request.get('v')
         internal = self.isInternal(path)
 
@@ -340,14 +376,10 @@ class QuoteJson(basehandler.BaseHandler):
         quotes_json= [q._as_dict() for q in quotes]
         return self.render_json(quotes_json)
 
-
-_INDEX_NAME = 'wiki'
-class Search(basehandler.BaseHandler):
-    pass
-
-#class CreateDocument(author, content) :
-#    if self.useradmin:
-#        return search.Document(
-#            fields = [search.TextField(name = 'author', value = author),
-#                      search.HtmlField(name = 'content', value = content),
-#                      search.DateField(name = 'date', value = datetime.now().date())])
+def CreateDocument(author, path, content) :
+    return search.Document(
+        doc_id = path,
+        fields = [search.TextField(name = 'author', value = author),
+                  search.TextField(name = 'path', value = path),
+                  search.HtmlField(name = 'content', value = content),
+                  search.DateField(name = 'date', value = datetime.now().date())])

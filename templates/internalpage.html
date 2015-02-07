@@ -27,7 +27,9 @@
     <div class="page-header">
         <h1>{{ path | replace("/internal/", "") }}</h1>
     </div>
+    {% if img_key %}
     <img src='/img{{ path }}?img_id={{img_key}}' class="img-responsive img-rounded center-block">
+    {% endif %}
         {{ content | safe }}
 </div>
 

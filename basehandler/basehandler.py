@@ -12,10 +12,11 @@ import json
 from libs.utils.utils import *
 from libs.models.usermodels import *
 from libs.models.pagemodels import *
+from libs.models.quotemodels import *
 from google.appengine.api import users
 
 
-def datetimeformat(value, format='%H:%M / %d-%m-%Y'):
+def datetimeformat(value, format='%B %Y'):
     return value.strftime(format)
 
 
@@ -60,7 +61,7 @@ class BaseHandler(webapp2.RequestHandler):
         uid = self.read_secure_cookie('user_id')
         self.user = uid and User._by_id(int(uid))
         self.useradmin = users.is_current_user_admin() and users.get_current_user()
-        if self.useradmin: self.uname = users.get_current_user().nickname()
+        if self.useradmin: self.uname = users.get_current_user().nickname().split('@')[0]
         if self.user: self.uname = self.user.name
         #self.useradmin = users.get_current_user()
         #self.isadmin = users.is_current_user_admin()
@@ -69,6 +70,31 @@ class BaseHandler(webapp2.RequestHandler):
             self.format = 'json'
         else:
             self.format = 'html'
+
+    def isInternal(self, path):
+        """
+        returns True if path == '/admin/internal'
+        """
+        dir_name = os.path.dirname(path)
+        if dir_name == '/internal':
+            return True
+        else: return False
+
+    def getRandomQuote(self):
+        """
+        randomly take a quote
+        :return: a tuple of (quote, source)
+        """
+
+        quotes = Quote.query().fetch(limit = None)
+        if quotes:
+            choosen_quote = random.choice(quotes)
+            source = choosen_quote.source
+            quote = choosen_quote.quote
+        else:
+            quote = "We share, because we are not alone"
+            source = ""
+        return (quote, source)
 
     def login(self, user):
         self.set_secure_cookie('user_id', str(user.key().id()))

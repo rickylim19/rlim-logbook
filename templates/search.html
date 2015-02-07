@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block customcss %}
+<link href="/css/jumbotron.css" rel="stylesheet">
+<link href="/css/search.css" rel="stylesheet">
+{% endblock %}
+
+{% block internal %} active {% endblock %}
+
+{% block content %}
+<!-- Wiki Search -->
+<br>
+<form class="form-inline global-search" method='post'>
+    <div class="form-group">
+        <label class="sr-only">Search Wiki</label>
+        <input type="search" name='search' class="form-control" placeholder="search here">
+    </div>
+    <button type="submit" class="btn btn-default">
+        <span class="glyphicon glyphicon-search"></span>
+    </button>
+</form>
+
+<div class="container">
+    <h2> {{len_results}} of {{results.number_found}} wiki found </h2>
+    {% for scored_document in results %}
+
+    <div class="row">
+        {% for f in scored_document.fields%}
+        {% for expr in scored_document.expressions %}
+        <a class="brand" href="{{f.value}}" target='_blank'>
+            {{f.value.strip("/")}}
+        </a>
+        <br>
+
+        {% if expr.name == 'content' %}
+        {{ expr.value | safe }}
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+
+
+{% endblock %}

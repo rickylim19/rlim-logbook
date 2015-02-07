@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from google.appengine.ext import ndb
+import random
 
 class Quote(ndb.Model):
     quote = ndb.TextProperty(required=True)
@@ -13,7 +14,6 @@ class Quote(ndb.Model):
     @staticmethod
     def _parent_key(name="default"):
         return ndb.Key('quotes', name)
-        #jjreturn ndb.Key.from_path('quotes', name)
 
     def as_dict(self):
         time_fmt = '%c'
