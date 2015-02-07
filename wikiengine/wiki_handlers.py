@@ -77,7 +77,6 @@ class InternalHome(basehandler.BaseHandler):
     def get(self):
         if self.useradmin:
             path_content = getRecentPages(internal = True)
-
             self.render("internalhome.html",
                             pages = path_content)
 
