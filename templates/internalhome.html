@@ -22,15 +22,15 @@
         </form>
 
     {% if results %}
-    <div class="container">
-            <h2> {{len_results}} of {{results.number_found}} wiki found </h2>
+    <div class="container text-center">
+            <h2> {{len_results}} of {{results.number_found}} wiki found "{{ query }}" </h2>
             {% for scored_document in results %}
 
                   <div class="row">
                   {% for f in scored_document.fields%}
                   {% for expr in scored_document.expressions %}
                       <a class="brand" href="{{f.value}}" target='_blank'>
-                          {{f.value.strip("/") | replace("/internal/", "")}}
+                          {{f.value.strip("/") | replace("admin/internal/", "")}}
                       </a>
                         <br>
 
@@ -39,7 +39,9 @@
                         {% endif %}
                   {% endfor %}
                   {% endfor %}
+                      <br>
                   </div>
+
             {% endfor %}
     </div>
     {% endif %}

@@ -16,7 +16,8 @@ DEBUG = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 PAGE_RE = r'(/(?:[a-zA-Z0-9]+/?)*)'
 app = webapp2.WSGIApplication([
        ('/upload' + PAGE_RE, wiki_handlers.EditPage),
-       ('/img' + PAGE_RE, wiki_handlers.Image),
+       ('/img' + PAGE_RE, wiki_handlers.FrontImage),
+       #('/search', wiki_handlers.Search)
        ('/login', users_handlers.Login),
        ('/logout', users_handlers.Logout),
        ('/flush', flush_handlers.Flush),

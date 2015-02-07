@@ -104,7 +104,7 @@ class InternalHome(basehandler.BaseHandler):
                 len_results = len(results.results)
 
                 self.render('internalhome.html', results = results,
-                            len_results = len_results)
+                            len_results = len_results, query = query)
 
             else:
                 self.redirect('/admin/internal')
