@@ -26,12 +26,18 @@ from google.appengine.api import search
 _INDEX_NAME = 'wiki'
 def getRecentPages(internal = False):
     """
-    returns a tuple path_content
-    path_content = (path, uname, last_modified, img_key, content))
+    returns a sorted tuple of path_content
+    path_content = (path, uname, last_modified, img_key, content_preview))
+    sorting from the most recent last_modified (descending)
+
     # path: path of the wiki (wikipage directory)
     # uname: username
     # last_modified: date when wiki was recently modified
-    # img_key:
+    # img_key: unique img_id to query the img in the DB
+
+    # there two DBs that this function could get:
+    # InternalPage: wikipage for internal directory (only for admins)
+    # Page: wikipage for home directory (for public)
     """
 
     if internal:
@@ -41,48 +47,65 @@ def getRecentPages(internal = False):
 
     list_paths = [page.path for page in page_paths]
 
+    # a list of most recent wikipage entity
     pages = []
     for path in list_paths:
-        if internal: recent_page = InternalPage._by_path(path).get() #get the most recent!
-        else: recent_page = Page._by_path(path).get() #get the most recent!
+        # get the most recent from InternalPage!
+        if internal:
+            recent_page = InternalPage._by_path(path).get()
+        else:
+            recent_page = Page._by_path(path).get() #get the most recent from page!
         pages.append(recent_page)
-
 
     if pages:
         path_content = []
         for page in pages:
             if page is not None:
-                if page.img:
-                    path, uname, last_modified, img_key, content = page.path, page.username,\
-                                                          page.last_modified, page.img_id,\
-                                                          page.content
-                else:
-                    path, uname, last_modified, img_key, content = page.path, page.username,\
-                                                          page.last_modified, None,\
-                                                          page.content
-                path_content.append((path, uname, last_modified, img_key, content))
+                (path, uname, last_modified, img_key, content) = page.path, page.username,\
+                                                                 page.last_modified, page.img_id,\
+                                                                 page.content
+                # get the first 5 words of the content
+                content_preview = ' '.join(content.split()[:5])
+                path_content.append((path, uname, last_modified, img_key, content_preview))
+
         # sorted based on the last_modified from the most recent date
         path_content = sorted(path_content, key = lambda x:x[2], reverse = True)
     else:
         path_content = ''
 
-
     return path_content
 
-
-
-
 class Home(basehandler.BaseHandler):
+    """
+    handles the get request for '/' or home directory
+    """
     def get(self):
-        quote, source = self.getRandomQuote()
+        quotes = Quote._get_all()
+        if quotes:
+            choosen_quote = random.choice(quotes)
+            source = choosen_quote.source
+            quote = choosen_quote.quote
+        else:
+            quote = "We share, because we are not alone"
+            source = ""
+
         path_content = getRecentPages()
-
-
         self.render("home.html",
                     quote = quote, source = source,
                     pages = path_content)
 
 class InternalHome(basehandler.BaseHandler):
+    """
+    handles the get and post requests for '/admin/internal'
+
+    get request:
+    - display the wikipages published for internal
+    - display the search form (full-text search)
+
+    post request:
+    - handles the search query results (limit to 10)
+
+    """
     def get(self):
         if self.useradmin:
             path_content = getRecentPages(internal = True)
@@ -91,7 +114,6 @@ class InternalHome(basehandler.BaseHandler):
 
     def post(self):
         if self.useradmin:
-
             # for searching
             query = self.request.get('search').strip()
             if query:
@@ -106,7 +128,7 @@ class InternalHome(basehandler.BaseHandler):
                     limit = 10,
                     snippeted_fields=['content'],
                     sort_options=sort_opts,
-                    returned_fields = ['path'])
+                    returned_fields = ['path_link'])
 
                 query_obj = search.Query(query_string=query, options=query_options)
                 results = search.Index(name=_INDEX_NAME).search(query=query_obj)
@@ -120,6 +142,9 @@ class InternalHome(basehandler.BaseHandler):
 
 
 class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
+    """
+    Handles the editor of the wiki
+    """
     def get(self, path):
 
         internal = self.isInternal(path)
@@ -135,7 +160,6 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
 
                 if not p:
                     return self.notfound()
-            
             else:
                 if internal:
                     p = InternalPage._by_path(path).get()
@@ -155,30 +179,34 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
         internal = self.isInternal(path)
 
         if path and content:
+
             if internal:
-                path_index = '/admin' + path
+                path_link = '/admin' + path
             else:
-                path_index = path
-            search.Index(name = _INDEX_NAME).put(CreateDocument(author = self.uname,
-                                                                path = path_index,
+                path_link = path
+
+            # create the index document for full-text search
+            search.Index(name = _INDEX_NAME).put(CreateDocument(path = path,
+                                                                path_link = path_link,
+                                                                author = self.uname,
                                                                 content = content))
             if internal:
                 old_page = InternalPage._by_path(path).get()
             else:
                 old_page = Page._by_path(path).get()
 
-            if old_page:
-                img = old_page.img
-                if img == '':
-                    img = self.request.get('img')
-            else:
-                img = self.request.get('img')
+            img = self.request.get('img')
 
             # sha1 digest of the img file as img_id
             # this is unique and contains only URL characters
-            img_id = sha1(str(img)).hexdigest()
-
-
+            img_id = ''
+            if img:
+                img_id = sha1(str(img)).hexdigest()
+            else:
+                if old_page:
+                    # if the previous wikipage already contained img
+                    img_id = old_page.img_id
+                    img = old_page.img
 
             update = False
             if not old_page:
@@ -219,8 +247,6 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
                              img_id = img_id
                              )
                     p.put()
-
-                    # add the index
                     self.redirect(path)
             else:
                 if internal: self.redirect("/admin" + path)
@@ -230,6 +256,9 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
             self.render("edit.html", path = path, error = error)
 
 class HistoryPage(basehandler.BaseHandler):
+    """
+    Handles the history, to keep track of the wikipage versions
+    """
     def get(self, path):
         internal = self.isInternal(path)
         if internal:
@@ -249,36 +278,33 @@ class HistoryPage(basehandler.BaseHandler):
 
 
 class WikiPage(basehandler.BaseHandler):
+    """
+    Handles the display of wikipage
+    """
     def get(self, path):
         v = self.request.get('v') # get the requested version
         p = None
         internal = self.isInternal(path)
 
-        if v:
-            if v.isdigit():
-                if internal:
-                    page = InternalPage._by_version(int(v), path)
-                    p = page.get()
-                else:
-                    page = Page._by_version(int(v), path)
-                    p = page.get()
+        if v.isdigit():
+            if internal:
+                p = InternalPage._by_version(int(v), path).get()
+            else:
+                p = Page._by_version(int(v), path).get()
 
-                if not p: return self.notfound()
-                content = markdown(p.content)
-                if p.img:
-                    img_key = p.img_id
-                else: img_key = None
+            if not p: return self.notfound()
+            content = markdown(p.content)
+            if p.img:
+                img_key = p.img_id
+            else: img_key = None
 
         else:
             if internal:
-                page = InternalPage._by_path(path)
-                p = page.get()
+                p = InternalPage._by_path(path).get()
             else:
-                page = Page._by_path(path)
-                p = page.get()
+                p = Page._by_path(path).get()
             if p:
                 if p.img:
-                    #img_key = p.key.urlsafe()
                     img_key = p.img_id
                 else: img_key = None
                 content = markdown(p.content)
@@ -290,12 +316,15 @@ class WikiPage(basehandler.BaseHandler):
                 self.render("internalpage.html", content = content,
                             path = path, img_key = img_key)
             else:
-                self.render("page.html", content = content, path = path,
-                            img_key = img_key)
+                self.render("page.html", content = content,
+                            path = path, img_key = img_key)
         else:
             self.redirect("/admin/_edit" + path)
 
 class AddQuote(basehandler.BaseHandler):
+    """
+    Handles the addition of quotes to be displayed in the home jumbotron
+    """
     def get(self):
         if self.useradmin:
             self.render("addquote.html")
@@ -306,22 +335,25 @@ class AddQuote(basehandler.BaseHandler):
             source = self.request.get('source')
 
             if quote:
-                q = Quote(parent = Quote._parent_key(),
-                          quote=quote, source=source, 
-                          username=self.useradmin.nickname())
-                q.put()
+                # put quote into datastore and added to memcache
+                Quote._save(quote = quote,
+                            source = source,
+                            username = self.useradmin.nickname())
                 self.redirect("/")
             else:
-                logging.error('No Content')
                 error = "Add a quote please!"
                 self.render("addquote.html", error=error)
 
 
 class DeletePage(basehandler.BaseHandler):
+    """
+    Handles wikipage deletion given its path and/or version
+    and delete the document index as well (given the docID which the path)
+    Note: document index is used for full-text search
+    """
     def get(self, path):
         v = self.request.get('v')
         internal = self.isInternal(path)
-
 
         if not self.useradmin and not v:
             self.error(400)
@@ -343,11 +375,18 @@ class DeletePage(basehandler.BaseHandler):
                                           fetch(keys_only = True)
             else: keys_ = Page.query().filter(Page.path == path).fetch(keys_only = True)
             ndb.delete_multi(keys_)
-            self.redirect('/?')
+
+            # delete the document index
+            doc_index = search.Index(name = _INDEX_NAME)
+            doc_index.delete(path)
+            if internal: self.redirect('/admin/internal/?')
+            else: self.redirect('/?')
 
 class FrontImage(basehandler.BaseHandler):
     """
     Serve the image <src> for the thumbnail and post image (on the top)
+    e.g:
+    src='/img/test1?img_id=98c132370976b4e283e2d545e396ad2c2fb78da3
     """
     def get(self, path):
         internal = self.isInternal(path)
@@ -357,12 +396,21 @@ class FrontImage(basehandler.BaseHandler):
             page = InternalPage._by_img_id(img_id, path).get()
         else:
             page = Page._by_img_id(img_id, path).get()
-        #img_key = ndb.Key(urlsafe = self.request.get('img_id'))
-        #page = img_key.get()
-        logging.error(page)
         if page:
             self.response.headers['Content-Type'] = 'image/png'
             self.response.out.write(page.img)
+
+def CreateDocument(author, path, path_link, content) :
+    return search.Document(
+        doc_id = path,
+        fields = [search.TextField(name = 'author', value = author),
+                  search.TextField(name = 'path', value = path),
+                  search.TextField(name = 'path_link', value = path_link),
+                  search.HtmlField(name = 'content', value = content),
+                  search.DateField(name = 'date', value = datetime.now().date())])
+
+
+#### API ###
 
 class PageJson(basehandler.BaseHandler):
     def get(self):
@@ -385,10 +433,3 @@ class QuoteJson(basehandler.BaseHandler):
         quotes_json= [q._as_dict() for q in quotes]
         return self.render_json(quotes_json)
 
-def CreateDocument(author, path, content) :
-    return search.Document(
-        doc_id = path,
-        fields = [search.TextField(name = 'author', value = author),
-                  search.TextField(name = 'path', value = path),
-                  search.HtmlField(name = 'content', value = content),
-                  search.DateField(name = 'date', value = datetime.now().date())])

@@ -24,6 +24,7 @@
     {% if results %}
     <div class="container text-center">
             <h2> {{len_results}} of {{results.number_found}} wiki found "{{ query }}" </h2>
+            <br>
             {% for scored_document in results %}
 
                   <div class="row">
@@ -32,16 +33,17 @@
                       <a class="brand" href="{{f.value}}" target='_blank'>
                           {{f.value.strip("/") | replace("admin/internal/", "")}}
                       </a>
-                        <br>
-
-                        {% if expr.name == 'content' %}
-                            {{ expr.value | safe }}
-                        {% endif %}
-                  {% endfor %}
-                  {% endfor %}
                       <br>
-                  </div>
 
+                      {% if expr.name == 'content' %}
+                          {{ expr.value | safe }}
+                      {% endif %}
+                      <br>
+
+                  {% endfor %}
+                  {% endfor %}
+                      <hr>
+                  </div>
             {% endfor %}
     </div>
     {% endif %}
@@ -52,21 +54,26 @@
     {% if pages %}
         {%- for page_content in pages | batch(2) %}
             <div class="row">
-                {%- for path, uname, last_modified, img_key, content in page_content %}
+                {%- for path, uname, last_modified, img_key, content_preview in page_content %}
                     <div class="col-md-6">
                         <h2>
+                            <!-- path or title -->
                             <a class="brand" href="/admin{{path}}" target='_blank'>
                                 {{path|replace("/internal/", "")}}
                             </a>
                         </h2>
+
                         <i>Last Modified by {{ uname }} on {{ last_modified | datetimeformat }}</i>
+
+                        <!-- delete page confirmation -->
                         {% if admin %}
-                            <a data-href="/admin/_delete/{{path.strip("/")}}" data-toggle="modal" data-target="#confirm-delete" href="#">
+                            <a data-href="/admin/_delete/{{path.strip("/")}}" data-toggle="modal"
+                               data-target="#confirm-delete" href="#">
                                 <span class="glyphicon glyphicon-trash"></span>
                             </a>
                         {% endif %}
+
                         </hr>
-                        <br>
                         <br>
 
                         {% if img_key %}
@@ -74,7 +81,9 @@
                              class="img-responsive img-thumbnail">
                         {% endif %}
                         <br>
-                        <br>
+
+
+                        <p> {{content_preview}} ... </p>
                         <p><a class="btn btn-default" href="/admin{{path}}" role="button">View details &raquo;</a></p>
                     </div>
                 {%- endfor %}
