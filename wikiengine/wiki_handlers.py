@@ -22,8 +22,17 @@ import urllib
 from google.appengine.api import search
 
 
+# index name for search feature
 _INDEX_NAME = 'wiki'
 def getRecentPages(internal = False):
+    """
+    returns a tuple path_content
+    path_content = (path, uname, last_modified, img_key, content))
+    # path: path of the wiki (wikipage directory)
+    # uname: username
+    # last_modified: date when wiki was recently modified
+    # img_key:
+    """
 
     if internal:
         page_paths = InternalPage.query(projection=["path"], distinct=True)
@@ -165,6 +174,8 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
             else:
                 img = self.request.get('img')
 
+            # sha1 digest of the img file as img_id
+            # this is unique and contains only URL characters
             img_id = sha1(str(img)).hexdigest()
 
 
@@ -341,7 +352,6 @@ class FrontImage(basehandler.BaseHandler):
     def get(self, path):
         internal = self.isInternal(path)
         img_id = self.request.get('img_id')
-        logging.error(img_id)
 
         if internal:
             page = InternalPage._by_img_id(img_id, path).get()
