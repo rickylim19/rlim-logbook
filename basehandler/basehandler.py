@@ -80,31 +80,42 @@ class BaseHandler(webapp2.RequestHandler):
             return True
         else: return False
 
-    def getRandomQuote(self):
-        """
-        randomly take a quote
-        :return: a tuple of (quote, source)
-        """
-
-        quotes = Quote.query().fetch(limit = None)
-        if quotes:
-            choosen_quote = random.choice(quotes)
-            source = choosen_quote.source
-            quote = choosen_quote.quote
-        else:
-            quote = "We share, because we are not alone"
-            source = ""
-        return (quote, source)
-
     def login(self, user):
         self.set_secure_cookie('user_id', str(user.key().id()))
 
     def logout(self):
         self.response.headers.add_header(
                 'Set-Cookie', 'user_id=; Path=/')
-    def notfound(self):
-        self.error(404)
-        self.write('<h1>404: Not Found</h1>, Sorry your page does not exist')
+
+    def handle_error(self, code):
+
+        # Log the error.
+        logging.exception(code)
+
+        page_title = 'Ohh Snap, An Error has Occured!!'
+        super(BaseHandler, self).error(code) #override the error method
+        # If the exception is a HTTPException, use its error code.
+        # Otherwise use a generic 500 error code.
+        if code == 403:
+            message = 'Sorry Your request can not be completed!'
+        elif code == 404:
+            message = 'Oops! This wiki has no resource to handle your request'
+        elif code == 'nonadmin':
+            message = 'Oops! for admin only'
+
+        else:
+            message = 'A server error occurred!'
+
+        self.render('error.html',
+                    page_title = page_title,
+                    message = message)
 
     def next_url(self):
         self.request.headers.get('referer', '/')
+
+class NotFound(BaseHandler):
+    """
+    Handles unexpected requests
+    """
+    def get(self):
+        self.handle_error(404)

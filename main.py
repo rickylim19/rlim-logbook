@@ -9,15 +9,14 @@ from webapp2_extras import routes
 from wikiengine import wiki_handlers
 from users import users_handlers
 from libs.flush import flush_handlers
+from basehandler import basehandler
 
 DEBUG = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
-#PAGE_RE = r'(/.*)'
-PAGE_RE = r'(/(?:[a-zA-Z0-9]+/?)*)'
+PAGE_RE = r'(/(?:[a-zA-Z0-9-_]+/?)*)'
 app = webapp2.WSGIApplication([
        ('/upload' + PAGE_RE, wiki_handlers.EditPage),
        ('/img' + PAGE_RE, wiki_handlers.FrontImage),
-       #('/search', wiki_handlers.Search)
        ('/login', users_handlers.Login),
        ('/logout', users_handlers.Logout),
        ('/flush', flush_handlers.Flush),
@@ -25,4 +24,5 @@ app = webapp2.WSGIApplication([
        ('/quotes.json', wiki_handlers.QuoteJson),
        ('/?', wiki_handlers.Home),
        (PAGE_RE, wiki_handlers.WikiPage),
+       ('/.*', basehandler.NotFound),
       ], debug=DEBUG)

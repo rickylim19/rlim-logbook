@@ -83,7 +83,7 @@
                         <br>
 
 
-                        <p> {{content_preview}} ... </p>
+                        {{content_preview|safe}}
                         <p><a class="btn btn-default" href="/admin{{path}}" role="button">View details &raquo;</a></p>
                     </div>
                 {%- endfor %}

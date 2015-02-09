@@ -26,14 +26,7 @@ from google.appengine.api import search
 _INDEX_NAME = 'wiki'
 def getRecentPages(internal = False):
     """
-    returns a sorted tuple of path_content
-    path_content = (path, uname, last_modified, img_key, content_preview))
-    sorting from the most recent last_modified (descending)
-
-    # path: path of the wiki (wikipage directory)
-    # uname: username
-    # last_modified: date when wiki was recently modified
-    # img_key: unique img_id to query the img in the DB
+    returns a list of pages (page obj)
 
     # there two DBs that this function could get:
     # InternalPage: wikipage for internal directory (only for admins)
@@ -57,21 +50,32 @@ def getRecentPages(internal = False):
             recent_page = Page._by_path(path).get() #get the most recent from page!
         pages.append(recent_page)
 
-    if pages:
-        path_content = []
-        for page in pages:
-            if page is not None:
-                (path, uname, last_modified, img_key, content) = page.path, page.username,\
-                                                                 page.last_modified, page.img_id,\
-                                                                 page.content
-                # get the first 5 words of the content
-                content_preview = ' '.join(content.split()[:5])
-                path_content.append((path, uname, last_modified, img_key, content_preview))
+    return pages
 
-        # sorted based on the last_modified from the most recent date
-        path_content = sorted(path_content, key = lambda x:x[2], reverse = True)
-    else:
-        path_content = ''
+def getPageContent(pages):
+    """
+    returns a list of tuples
+    each tuple = (path, uname, last_modified, img_key, content_preview))
+    sorting from the most recent last_modified (descending)
+
+    # path: path of the wiki (wikipage directory)
+    # uname: username
+    # last_modified: date when wiki was recently modified
+    # img_key: unique img_id to query the img in the DB
+
+    """
+    path_content = []
+    for page in pages:
+        if page is not None:
+            (path, uname, last_modified, img_key, content) = page.path, page.username,\
+                                                             page.last_modified, page.img_id,\
+                                                             page.content
+            # get the first 5 words of the content
+            content_preview = markdown(' '.join(content.split()[:6]) + ' ...').replace("\n", '')
+            path_content.append((path, uname, last_modified, img_key, content_preview))
+
+    #sorted based on the last_modified from the most recent date
+    path_content = sorted(path_content, key = lambda x:x[2], reverse = True)
 
     return path_content
 
@@ -85,14 +89,15 @@ class Home(basehandler.BaseHandler):
             choosen_quote = random.choice(quotes)
             source = choosen_quote.source
             quote = choosen_quote.quote
+            logging.error(quote)
         else:
             quote = "We share, because we are not alone"
             source = ""
 
-        path_content = getRecentPages()
+        pages = getPageContent(getRecentPages())
         self.render("home.html",
                     quote = quote, source = source,
-                    pages = path_content)
+                    pages = pages)
 
 class InternalHome(basehandler.BaseHandler):
     """
@@ -108,9 +113,8 @@ class InternalHome(basehandler.BaseHandler):
     """
     def get(self):
         if self.useradmin:
-            path_content = getRecentPages(internal = True)
-            self.render("internalhome.html",
-                            pages = path_content)
+            pages = getPageContent(getRecentPages(internal = True))
+            self.render("internalhome.html", pages = pages)
 
     def post(self):
         if self.useradmin:
@@ -148,6 +152,7 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
     def get(self, path):
 
         internal = self.isInternal(path)
+        # path allowed only for alphabets and numbers only, other than that converted into '_'
         if self.useradmin:
             v = self.request.get('v')
             p = None
@@ -172,8 +177,9 @@ class EditPage(basehandler.BaseHandler, blobstore_handlers.BlobstoreUploadHandle
     def post(self, path):
 
         if not self.useradmin:
-            self.error(400)
-            return 
+            self.handle_error(400)
+            return
+        # path allowed only for alphabets and numbers only, other than that converted into '_'
 
         content = self.request.get('content')
         internal = self.isInternal(path)
@@ -333,13 +339,14 @@ class AddQuote(basehandler.BaseHandler):
         if self.useradmin:
             quote = self.request.get('content')
             source = self.request.get('source')
+            uname = self.useradmin.nickname()
 
             if quote:
                 # put quote into datastore and added to memcache
                 Quote._save(quote = quote,
                             source = source,
-                            username = self.useradmin.nickname())
-                self.redirect("/")
+                            username = uname)
+                self.render('thankyou.html', name = uname)
             else:
                 error = "Add a quote please!"
                 self.render("addquote.html", error=error)
@@ -356,7 +363,7 @@ class DeletePage(basehandler.BaseHandler):
         internal = self.isInternal(path)
 
         if not self.useradmin and not v:
-            self.error(400)
+            self.handle_error(400)
             return
 
         if self.useradmin and v.isdigit():
@@ -413,23 +420,31 @@ def CreateDocument(author, path, path_link, content) :
 #### API ###
 
 class PageJson(basehandler.BaseHandler):
+    """
+    Returns the list of recent wikipages in json
+    """
     def get(self):
-        pages, quotes, age = front_pages()
+        pages = getRecentPages()
         pages_json = [p._as_dict() for p in pages]
         return self.render_json(pages_json)
 
 class InternalPageJson(basehandler.BaseHandler):
+    """
+    Returns the list of recent wikipages in json
+    """
     def get(self):
-        if self.user or self.isadmin:
-            pages, age = internal_pages()
+        if self.useradmin:
+            pages = getRecentPages(internal=True)
             pages_json = [p._as_dict() for p in pages]
             return self.render_json(pages_json)
         else:
-            self.redirect('/login')
+            self.handle_error('nonadmin')
 
 class QuoteJson(basehandler.BaseHandler):
+    """
+    Returns the list of quotes in json
+    """
     def get(self):
-        pages, quotes, age = front_pages()
+        quotes = Quote._get_all()
         quotes_json= [q._as_dict() for q in quotes]
         return self.render_json(quotes_json)
-

@@ -9,7 +9,6 @@ class Page(ndb.Model):
     username = ndb.StringProperty(required=True)
     content = ndb.TextProperty(required=True)
     version = ndb.IntegerProperty(required = True)
-    #blob_key = ndb.BlobKeyProperty()
     img = ndb.BlobProperty()
     img_id = ndb.StringProperty()
     created = ndb.DateTimeProperty(auto_now_add=True)
@@ -45,7 +44,7 @@ class Page(ndb.Model):
         time_fmt = '%c'
         d = {'path': self.path,
              'username': self.username,
-             'content': markdown(self.content),
+             'content': markdown(self.content).replace("\n", ""),
              'version': self.version,
              'created': self.created.strftime(time_fmt),
              'last_modified': self.created.strftime(time_fmt)}
